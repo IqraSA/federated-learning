@@ -61,20 +61,20 @@ def fetch_models_from_ipfs(fileData):
         os.mkdir('models')
 
     for file in fileData:
-        req = requests.get("http://localhost:8080/ipfs/" + file.ipfsHash)
+        req = requests.get(f"http://localhost:8080/ipfs/{file.ipfsHash}")
 
         if req.status_code != 200:
             print("Failed to retrieve", file.fileName)
 
         else:
-            with open("models/" + file.accountNumber, "wb") as f:
+            with open(f"models/{file.accountNumber}", "wb") as f:
                 f.write(req.content)
 
 
 def bytes32_to_string(x):
     output = x.hex().rstrip("0")
     if len(output) % 2 != 0:
-        output = output + '0'
+        output = f'{output}0'
     output = bytes.fromhex(output).decode('utf8')
     return output
 
