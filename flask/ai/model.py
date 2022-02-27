@@ -46,9 +46,10 @@ class Model:
         # computer Fisher information for each parameter
 
         # initialize Fisher information for most recent task
-        self.F_accum = []
-        for v in range(len(self.var_list)):
-            self.F_accum.append(np.zeros(self.var_list[v].get_shape().as_list()))
+        self.F_accum = [
+            np.zeros(self.var_list[v].get_shape().as_list())
+            for v in range(len(self.var_list))
+        ]
 
         # sampling a random class from softmax
         probs = tf.nn.softmax(self.y)
@@ -67,21 +68,22 @@ class Model:
             # square the derivatives and add to total
             for v in range(len(self.F_accum)):
                 self.F_accum[v] += np.square(ders[v])
-            if(plot_diffs):
-                if i % disp_freq == 0 and i > 0:
+            if plot_diffs and i % disp_freq == 0 and i > 0:
                     # recording mean diffs of F
-                    F_diff = 0
-                    for v in range(len(self.F_accum)):
-                        F_diff += np.sum(np.absolute(self.F_accum[v]/(i+1) - F_prev[v]))
-                    mean_diff = np.mean(F_diff)
-                    mean_diffs = np.append(mean_diffs, mean_diff)
-                    for v in range(len(self.F_accum)):
-                        F_prev[v] = self.F_accum[v]/(i+1)
-                    plt.plot(range(disp_freq+1, i+2, disp_freq), mean_diffs)
-                    plt.xlabel("Number of samples")
-                    plt.ylabel("Mean absolute Fisher difference")
-                    display.display(plt.gcf())
-                    display.clear_output(wait=True)
+                F_diff = sum(
+                    np.sum(np.absolute(self.F_accum[v] / (i + 1) - F_prev[v]))
+                    for v in range(len(self.F_accum))
+                )
+
+                mean_diff = np.mean(F_diff)
+                mean_diffs = np.append(mean_diffs, mean_diff)
+                for v in range(len(self.F_accum)):
+                    F_prev[v] = self.F_accum[v]/(i+1)
+                plt.plot(range(disp_freq+1, i+2, disp_freq), mean_diffs)
+                plt.xlabel("Number of samples")
+                plt.ylabel("Mean absolute Fisher difference")
+                display.display(plt.gcf())
+                display.clear_output(wait=True)
 
         # divide totals by number of samples
         for v in range(len(self.F_accum)):
@@ -89,10 +91,7 @@ class Model:
 
     def star(self):
         # used for saving optimal weights after most recent task training
-        self.star_vars = []
-
-        for v in range(len(self.var_list)):
-            self.star_vars.append(self.var_list[v].eval())
+        self.star_vars = [self.var_list[v].eval() for v in range(len(self.var_list))]
 
     def restore(self, sess):
         # reassign optimal weights for latest task
@@ -122,9 +121,7 @@ class Model:
                 sess.run(self.var_list[v].assign(weights[v]))
             
     def save_weights(self, filename):
-        weights = []
-        for v in range(len(self.var_list)):
-            weights.append(self.var_list[v].eval())
+        weights = [self.var_list[v].eval() for v in range(len(self.var_list))]
         with open(filename, 'wb') as f:
             pickle.dump(weights, f)
 

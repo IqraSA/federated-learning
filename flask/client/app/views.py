@@ -7,22 +7,20 @@ import os, time, requests
 def bytes32_to_string(x):
     output = x.hex().rstrip("0")
     if len(output) % 2 != 0:
-        output = output + '0'
+        output = f'{output}0'
     output = bytes.fromhex(output).decode('utf8')
     return output
 
 
 def get_accuracy():
     file = open('../ai/accuracy.txt', 'r')
-    accuracy = file.read()
-
-    return accuracy
+    return file.read()
 
 def fetch_model_from_ipfs(ipfsHash):
     if not os.path.exists('models'):
         os.mkdir('models')
 
-    req = requests.get("http://localhost:8080/ipfs/" + ipfsHash)
+    req = requests.get(f"http://localhost:8080/ipfs/{ipfsHash}")
 
     if req.status_code != 200:
         print("Failed to retrieve checkpoint")
@@ -45,11 +43,10 @@ def homepage(account_no):
 
 @app.route('/functions', methods=['GET', 'POST'])
 def contract_operations():
-    if request.method == 'GET':
-        account = session.get('account', DEFAULT_ACCOUNT)
-        return render_template('functions.html', account=account, accuracy = get_accuracy())
-    else:
+    if request.method != 'GET':
         return None
+    account = session.get('account', DEFAULT_ACCOUNT)
+    return render_template('functions.html', account=account, accuracy = get_accuracy())
 
 
 @app.route('/addFileToIPFS', methods=['GET', 'POST'])

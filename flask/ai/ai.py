@@ -12,8 +12,14 @@ MAX_CLIENTS = 2
 
 epochs = 1
 batch_size = 64
-placeX = [tf.placeholder(tf.float32, shape=[None, 784]) for i in range(MAX_CLIENTS)]
-placey = [tf.placeholder(tf.float32, shape=[None, 10]) for i in range(MAX_CLIENTS)]
+placeX = [
+    tf.placeholder(tf.float32, shape=[None, 784]) for _ in range(MAX_CLIENTS)
+]
+
+placey = [
+    tf.placeholder(tf.float32, shape=[None, 10]) for _ in range(MAX_CLIENTS)
+]
+
 models = [Model(placeX[i], placey[i]) for i in range(MAX_CLIENTS)]
 
 (X, y), (X_test, y_test) = mnist.load_data()
@@ -63,10 +69,8 @@ def train_task(model, epochs, batch_size, disp_freq, trainset, testsets, placeX,
             model.set_vanilla_loss()
         else:
             model.update_ewc_loss(lams[l])
-        # initialize test accuracy array for each task 
-        test_accs = []
-        for task in range(len(testsets)):
-            test_accs.append([])
+        # initialize test accuracy array for each task
+        test_accs = [[] for _ in range(len(testsets))]
         # train on current task
         for iter in range(num_iter):
             batch = trainset[0][iter * batch_size:iter * batch_size + batch_size], trainset[1][
@@ -82,8 +86,13 @@ def train_task(model, epochs, batch_size, disp_freq, trainset, testsets, placeX,
                     test_accs[task].append(model.accuracy.eval(feed_dict=feed_dict))
                     if plot_diffs:
                         c = chr(ord('A') + task)
-                        plot_h, = plt.plot(range(1, iter + 2, disp_freq), test_accs[task][:iter // disp_freq + 1],
-                                           colors[task], label="task " + c)
+                        (plot_h,) = plt.plot(
+                            range(1, iter + 2, disp_freq),
+                            test_accs[task][: iter // disp_freq + 1],
+                            colors[task],
+                            label=f"task {c}",
+                        )
+
                         plots.append(plot_h)
                 if plot_diffs:
                     plot_test_acc(plots)
@@ -102,9 +111,7 @@ def get_accuracy(model_filename, client_id):
     m.load_weights(model_filename)
 
     feed_dict = {placeX: X_t, placey: y_t}
-    accuracy = m.accuracy.eval(feed_dict=feed_dict)
-
-    return(accuracy)
+    return m.accuracy.eval(feed_dict=feed_dict)
 
 
 def ClientUpdate(model_filename, output_file):
@@ -129,11 +136,12 @@ def ClientUpdate(model_filename, output_file):
 
 ## Write or import
 def get_model_filename(i):
-    files = {}
-    files[0] = "0x6c156B11819f05Ad79794B008753729466D3Ccd5"
-    files[1] = "0xB7D2d5d7824e4ee393c4D83B9014CFb0b66078d5"
+    files = {
+        0: "0x6c156B11819f05Ad79794B008753729466D3Ccd5",
+        1: "0xB7D2d5d7824e4ee393c4D83B9014CFb0b66078d5",
+    }
 
-    return "../organization/models/" + files[i]
+    return f"../organization/models/{files[i]}"
 
 
 def FederatedAveraging(output_file):
